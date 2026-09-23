@@ -1,0 +1,5 @@
+kind: causal_choice
+params:
+  repo_id: Qwen/Qwen3.5-4B-Base
+  device: auto
+  max_length: 4096

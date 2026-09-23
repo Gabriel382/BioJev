@@ -4,7 +4,8 @@ import json
 import re
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from biojev.models.causal import load_causal_model, model_input_device
 
 from biojev.models.base import BenchmarkModel
 from biojev.schemas import NLIExample, PredictionRecord, RelationExample
@@ -21,10 +22,7 @@ class GenerativeChoiceModel(BenchmarkModel):
 
     def __init__(self, repo_id: str, device: str = "auto", max_new_tokens: int = 16):
         self.name = repo_id.replace("/", "_")
-        self.tokenizer = AutoTokenizer.from_pretrained(repo_id, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            repo_id, trust_remote_code=True, device_map=device, torch_dtype="auto"
-        )
+        self.model, self.tokenizer = load_causal_model(repo_id, device_map=device)
         self.max_new_tokens = max_new_tokens
 
     def _choose(self, prompt: str, choices: list[str]) -> str:
@@ -33,7 +31,7 @@ class GenerativeChoiceModel(BenchmarkModel):
             f"{prompt}\nChoose exactly one label from: {allowed}. "
             "Return only the label, with no explanation."
         )
-        inputs = self.tokenizer(full, return_tensors="pt").to(self.model.device)
+        inputs = self.tokenizer(full, return_tensors="pt").to(model_input_device(self.model))
         with torch.inference_mode():
             ids = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens, do_sample=False)
         text = self.tokenizer.decode(ids[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True).strip()

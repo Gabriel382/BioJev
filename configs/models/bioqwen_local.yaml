@@ -1,0 +1,6 @@
+kind: causal_choice
+params:
+  # Local PEFT adapter or merged checkpoint created by Sprint 2.
+  repo_id: outputs/bioqwen/pubmed_pmc_100m/final
+  device: auto
+  max_length: 4096

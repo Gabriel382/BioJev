@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from biojev.models.generative import GenerativeChoiceModel
+from biojev.models.causal_choice import CausalLikelihoodChoiceModel
 from biojev.models.openjev import OpenJevModel
 from biojev.models.seqcls import SequenceClassifierModel
 
@@ -11,6 +12,8 @@ def build_model(config: dict):
         return OpenJevModel(**config.get("params", {}))
     if kind == "generative":
         return GenerativeChoiceModel(**config["params"])
+    if kind == "causal_choice":
+        return CausalLikelihoodChoiceModel(**config["params"])
     if kind == "seqcls":
         return SequenceClassifierModel(**config["params"])
     raise KeyError(f"Unknown model kind: {kind}")

@@ -1,326 +1,324 @@
-# BioJev — Sprint 1 Benchmark Foundation
+# BioJev
 
-BioJev is the biomedical research project built on top of OpenJev. Sprint 1 establishes the **reproducible multi-dataset benchmark** before any BioJev fine-tuning or PubMed continual pretraining.
+BioJev is a biomedical decision-model research project built from the OpenJev/Qwen3.5 line. The repository is organized as cumulative, reproducible sprints.
 
-Sprint 1 provides:
+**Sprint 1** builds the multi-dataset biomedical benchmark. **Sprint 2** builds **BioQwen**, a biomedical domain-adapted Qwen3.5 backbone using continued causal language-model pretraining on streaming PubMed/PMC text. BioJev decision/NLI training comes later.
 
-- reproducible acquisition/normalization for BioNLI, NLI4CT, ChemProt, DDI2013 and BioRED;
-- optional MedNLI ingestion from a manually obtained PhysioNet copy;
-- unified NLI and relation-classification schemas;
-- OpenJev zero-shot evaluation;
-- Qwen generative baseline evaluation;
-- supervised BioBERT / BiomedBERT (PubMedBERT) / BioLinkBERT baselines;
-- Jev-style natural-language hypothesis verbalization for relation labels;
-- accuracy, macro/micro F1, ECE, Brier score and NLL;
-- deterministic seeds, run metadata and machine-readable predictions;
-- resumable dataset preparation;
-- a Windows/PowerShell-first workflow;
-- both an executable `.py` walkthrough and an ordered Jupyter notebook.
-
-## Scope
-
-Sprint 1 intentionally does **not** contain PubMed continual pretraining or BioJev training. Those belong to later sprints.
-
-For ChemProt, DDI2013 and BioRED, the default benchmark is **relation-type classification over annotated entity pairs**. Optional `NO_RELATION` negative generation is available, but it must not be reported as full end-to-end relation extraction.
-
-## Layout
+## What Sprint 2 adds
 
 ```text
-biojev_sprint1/
+Qwen/Qwen3.5-4B-Base
+        |
+        | continued biomedical pretraining
+        | PubMed abstracts + PMC Open Access
+        v
+     BioQwen
+        |
+        +--> held-out biomedical perplexity
+        +--> Sprint-1 multi-dataset comparison
+```
+
+The pipeline supports 100M, 500M, 1B and 3B token budgets; QLoRA, LoRA and full fine-tuning; mixed precision; gradient accumulation; checkpoint/resume; Accelerate multi-GPU training; JSONL/TensorBoard/W&B logging; and Hugging Face export.
+
+## Repository layout
+
+```text
+BioJev/
 ├── configs/
-│   ├── models/
-│   └── suites/
+│   ├── dapt/                    # 50K smoke + 100M/500M/1B/3B corpus budgets
+│   ├── models/                  # OpenJev/Qwen/BioQwen evaluators
+│   └── suites/                  # Sprint-1 and Sprint-2 benchmark matrices
 ├── data/
 │   ├── raw/
 │   └── processed/
 ├── docs/
+│   ├── DATASETS.md
+│   ├── CORPUS.md
+│   ├── EXPERIMENT_PROTOCOL.md
+│   └── SPRINT2.md
 ├── notebooks/
 │   ├── 01_sprint1_walkthrough.py
-│   └── 01_sprint1_walkthrough.ipynb
-├── results/
-├── runs/
+│   ├── 01_sprint1_walkthrough.ipynb
+│   ├── 02_sprint2_walkthrough.py
+│   └── 02_sprint2_walkthrough.ipynb
+├── outputs/bioqwen/             # ignored training outputs
 ├── scripts/
 │   ├── powershell/
 │   ├── download_datasets.py
-│   ├── report_disk_usage.py
-│   ├── train_baseline.py
-│   ├── train_baseline_matrix.py
+│   ├── inspect_corpus.py
+│   ├── train_dapt.py
+│   ├── evaluate_perplexity.py
+│   ├── export_hf.py
 │   ├── evaluate.py
 │   ├── run_suite.py
-│   └── aggregate_results.py
+│   └── compare_sprint2.py
 ├── src/biojev/
+│   ├── corpus/
+│   ├── datasets/
+│   ├── evaluation/
+│   ├── models/
+│   ├── training/
+│   └── transformations/
 └── tests/
 ```
 
-# 1. Setup — Windows PowerShell
+## 1. Setup — Windows PowerShell
 
 Python 3.11+ is recommended.
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev,plots,notebook]"
-```
-
-If PowerShell blocks virtual-environment activation for the current shell:
-
-```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\.venv\Scripts\Activate.ps1
-```
-
-The install now includes `bioc`, which is required by the current BigBio BioRED loader.
-
-You can also run the prepared setup script:
-
-```powershell
-.\scripts\powershell\setup.ps1
-```
-
-# 2. Download and prepare datasets
-
-```powershell
-python scripts/download_datasets.py --all
-```
-
-The downloader is **resumable**. If BioNLI, NLI4CT, ChemProt and DDI2013 are already processed and BioRED fails, rerunning the same command skips the completed datasets and continues with BioRED. Use `--force` only when you intentionally want to rebuild everything.
-
-To rebuild everything:
-
-```powershell
-python scripts/download_datasets.py --all --force
-```
-
-To retry only BioRED:
-
-```powershell
-python scripts/download_datasets.py biored
-```
-
-To inspect local disk use afterward:
-
-```powershell
-python scripts/report_disk_usage.py
-```
-
-See `docs/DISK_USAGE.md` for dataset-vs-model storage expectations.
-
-Or use the prepared PowerShell script:
-
-```powershell
-.\scripts\powershell\download_datasets.ps1
-```
-
-## MedNLI
-
-MedNLI requires credentialed PhysioNet access and is intentionally not downloaded automatically. After obtaining its official files:
-
-```powershell
-python scripts/download_datasets.py `
-  --mednli-dir "C:\path\to\mednli"
-```
-
-## Optional NO_RELATION generation
-
-```powershell
-python scripts/download_datasets.py chemprot ddi2013 biored `
-  --include-no-relation `
-  --negative-ratio 1.0
-```
-
-# 3. OpenJev zero-shot baseline
-
-```powershell
-python scripts/evaluate.py `
-  --model-config configs/models/openjev.yaml `
-  --dataset bionli `
-  --split test `
-  --seed 42
-```
-
-For a first GPU/download smoke test:
-
-```powershell
-python scripts/evaluate.py `
-  --model-config configs/models/openjev.yaml `
-  --dataset bionli `
-  --split test `
-  --seed 42 `
-  --max-examples 50
-```
-
-BioNLI is binary while OpenJev has contradiction / entailment / neutral outputs. The evaluator projects and renormalizes probabilities over the dataset's gold label space.
-
-For relation datasets, each candidate relation is verbalized as a hypothesis and OpenJev selects the relation with the highest entailment score.
-
-# 4. Qwen baseline
-
-```powershell
-python scripts/evaluate.py `
-  --model-config configs/models/qwen35_4b.yaml `
-  --dataset bionli `
-  --split test `
-  --seed 42
-```
-
-The generative baseline returns hard decisions. Its one-hot representation is stored for a uniform result format and must not be interpreted as calibrated probabilities.
-
-# 5. Conventional biomedical encoder baselines
-
-Single example:
-
-```powershell
-python scripts/train_baseline.py `
-  --model microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext `
-  --dataset bionli `
-  --output checkpoints/pubmedbert_bionli_seed42 `
-  --seed 42
-```
-
-Full configured baseline matrix:
-
-```powershell
-python scripts/train_baseline_matrix.py `
-  --config configs/suites/encoder_baselines.yaml
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,plots,notebook,train]"
 ```
 
 Or:
 
 ```powershell
-.\scripts\powershell\train_encoder_baselines.ps1
+.\scripts\powershell\sprint2_setup.ps1
 ```
 
-Default encoder families:
+QLoRA uses `bitsandbytes`. Current releases support NVIDIA CUDA on Windows, but the installed PyTorch CUDA build and bitsandbytes wheel still need to be compatible.
 
-- BioBERT — `dmis-lab/biobert-base-cased-v1.2`
-- BiomedBERT/PubMedBERT — `microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext`
-- BioLinkBERT — `michiyasunaga/BioLinkBERT-base`
-
-These are **supervised task baselines**, not zero-shot baselines.
-
-# 6. Benchmark suites
-
-Smoke suite:
+## 2. Sprint-1 datasets
 
 ```powershell
-python scripts/run_suite.py `
-  --config configs/suites/smoke.yaml
+python scripts/download_datasets.py --all
 ```
 
-or:
+The command now ends with a readable summary table showing every dataset, split and grand total.
+
+Included public datasets:
+
+```text
+BioNLI
+NLI4CT
+ChemProt
+DDI2013
+BioRED
+```
+
+MedNLI remains optional/manual because of PhysioNet access restrictions.
+
+## 3. Inspect the biomedical streaming corpus
+
+No full PubMed/PMC clone is required.
 
 ```powershell
-.\scripts\powershell\smoke.ps1
+python scripts/inspect_corpus.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --documents 10 `
+  --show-text
 ```
 
-Full zero-shot suite:
+The default mixture is 80% PubMed abstracts and 20% PMC Open Access full text. PMC defaults to commercial-use licenses only.
+
+## 4. Inspect a training plan without downloading the model
 
 ```powershell
-python scripts/run_suite.py `
-  --config configs/suites/sprint1.yaml
+python scripts/plan_dapt.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --world-size 1
 ```
 
-Aggregate result directories:
+This prints the token budget, packed-sequence count, effective batch size, optimizer-step count and corpus mixture.
+
+## 5. Smoke-test Sprint 2
+
+The smoke configuration uses only 50K tokens but still loads the real Qwen3.5-4B-Base model.
 
 ```powershell
-python scripts/aggregate_results.py results `
-  --output results/aggregate.csv
+python scripts/train_dapt.py `
+  --config configs/dapt/smoke.yaml
 ```
 
-Or run both with:
+Or:
 
 ```powershell
-.\scripts\powershell\full_zero_shot.ps1
+.\scripts\powershell\sprint2_smoke.ps1
 ```
 
-# 7. Python cell-by-cell version
+## 6. Train BioQwen
 
-`notebooks/01_sprint1_walkthrough.py` contains `# %%` cells. VS Code and Spyder can execute each section independently and in order.
-
-Open it directly in VS Code and use **Run Cell**, or run the whole file with:
+Recommended first scientific run:
 
 ```powershell
-python notebooks/01_sprint1_walkthrough.py
+python scripts/train_dapt.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml
 ```
 
-The expensive baseline-training and full-suite cells are commented out by default so the file does not unexpectedly launch hours of experiments.
+Other ready-made budgets:
 
-# 8. Jupyter notebook version
+```text
+configs/dapt/pubmed_pmc_500m.yaml
+configs/dapt/pubmed_pmc_1b.yaml
+configs/dapt/pubmed_pmc_3b.yaml
+```
 
-Launch Jupyter:
+Override the fine-tuning method from PowerShell:
+
+```powershell
+python scripts/train_dapt.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --method lora `
+  --output-dir outputs/bioqwen/pubmed_pmc_100m_lora
+```
+
+Or full fine-tuning:
+
+```powershell
+python scripts/train_dapt.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --method full `
+  --output-dir outputs/bioqwen/pubmed_pmc_100m_full
+```
+
+Full 4B fine-tuning requires substantially more memory than QLoRA and is mainly intended for a suitable multi-GPU machine.
+
+## 7. Resume a run
+
+Latest checkpoint:
+
+```powershell
+python scripts/train_dapt.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --resume
+```
+
+Exact checkpoint:
+
+```powershell
+python scripts/train_dapt.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --resume outputs/bioqwen/pubmed_pmc_100m/checkpoint-500
+```
+
+## 8. Multi-GPU
+
+After configuring Accelerate:
+
+```powershell
+accelerate config
+```
+
+Launch, for example, on two GPUs:
+
+```powershell
+accelerate launch `
+  --multi_gpu `
+  --num_processes 2 `
+  scripts/train_dapt.py `
+  --config configs/dapt/pubmed_pmc_100m.yaml
+```
+
+Or:
+
+```powershell
+.\scripts\powershell\train_bioqwen_multigpu.ps1 -NumProcesses 2
+```
+
+## 9. Qwen vs BioQwen: intrinsic biomedical language modeling
+
+Qwen3.5-4B-Base:
+
+```powershell
+python scripts/evaluate_perplexity.py `
+  --model Qwen/Qwen3.5-4B-Base `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --partition validation `
+  --tokens 1000000 `
+  --output results/perplexity/qwen35_4b_base.json
+```
+
+BioQwen:
+
+```powershell
+python scripts/evaluate_perplexity.py `
+  --model outputs/bioqwen/pubmed_pmc_100m/final `
+  --config configs/dapt/pubmed_pmc_100m.yaml `
+  --partition validation `
+  --tokens 1000000 `
+  --output results/perplexity/bioqwen_100m.json
+```
+
+The validation documents are isolated by a deterministic document-ID split and are not used during DAPT.
+
+## 10. Qwen vs BioQwen: Sprint-1 benchmark
+
+Because Sprint 2 intentionally contains no decision supervision, this comparison uses **mean conditional log-likelihood** over candidate labels/hypotheses rather than instruction-following generation.
+
+```powershell
+python scripts/run_sprint2_suite.py `
+  --config configs/suites/sprint2_ablation.yaml
+```
+
+Aggregate:
+
+```powershell
+python scripts/compare_sprint2.py `
+  --summary results/sprint2/summary.json `
+  --output results/sprint2/comparison.csv
+```
+
+Or run the complete evaluation block:
+
+```powershell
+.\scripts\powershell\sprint2_benchmark.ps1
+```
+
+## 11. Export BioQwen to Hugging Face format
+
+Adapter export:
+
+```powershell
+python scripts/export_hf.py `
+  --checkpoint outputs/bioqwen/pubmed_pmc_100m/final `
+  --output exports/BioQwen-4B-100M
+```
+
+Merged model:
+
+```powershell
+python scripts/export_hf.py `
+  --checkpoint outputs/bioqwen/pubmed_pmc_100m/final `
+  --output exports/BioQwen-4B-100M-merged `
+  --merge
+```
+
+Push when ready:
+
+```powershell
+python scripts/export_hf.py `
+  --checkpoint outputs/bioqwen/pubmed_pmc_100m/final `
+  --output exports/BioQwen-4B-100M `
+  --push-to-hub `
+  --repo-id Gabriel382/BioQwen-4B-100M
+```
+
+## 12. Notebook and cell-based Python workflows
+
+For VS Code/Spyder cells:
+
+```text
+notebooks/02_sprint2_walkthrough.py
+```
+
+For Jupyter:
 
 ```powershell
 python -m jupyter lab
 ```
 
-Then open:
+then open:
 
 ```text
-notebooks/01_sprint1_walkthrough.ipynb
+notebooks/02_sprint2_walkthrough.ipynb
 ```
 
-The notebook mirrors the `.py` walkthrough with separate ordered cells: install, dataset preparation, disk report, OpenJev smoke test, Qwen smoke test, smoke suite, optional heavy baseline training, optional full suite, and aggregation.
+See `docs/SPRINT2.md` for the detailed experimental protocol.
 
-# 9. Outputs
+## Research scope
 
-Evaluation runs use a stable structure such as:
-
-```text
-runs/openjev__bionli__test__seed42/
-├── predictions.jsonl
-├── metrics.json
-├── environment.json
-└── model_config.json
-```
-
-Trained encoders store their model/tokenizer plus dev/test metrics and predictions under `checkpoints/`.
-
-# 10. Metrics
-
-Probabilistic classifiers receive:
-
-- accuracy;
-- macro precision / recall / F1;
-- micro F1;
-- Expected Calibration Error (ECE);
-- multiclass Brier score;
-- negative log likelihood (NLL);
-- mean confidence.
-
-Later sprints can add AUROC/AUPRC, adaptive ECE, reliability plots and risk/coverage curves without changing the saved prediction format.
-
-# 11. Dataset preparation notes
-
-The project downloads/adapts datasets but does **not** redistribute their contents in Git.
-
-- BioNLI: `presencesw/bionli`
-- NLI4CT: `tasksource/nli4ct`
-- ChemProt: `bigbio/chemprot`
-- DDI2013: `bigbio/ddi_corpus`
-- BioRED: `bigbio/biored`
-- MedNLI: user-supplied after PhysioNet authorization
-
-BioRED currently uses a BigBio loading script that imports `bioc.pubtator`; `bioc` is therefore a BioJev dependency.
-
-On Windows, Hugging Face may warn that symlinks are unavailable. Downloads still work, but the cache can consume more physical disk space. Enabling Windows Developer Mode can improve Hugging Face cache deduplication.
-
-# 12. Tests
-
-```powershell
-pytest -q
-```
-
-# 13. Sprint-1 scientific role
-
-At the end of Sprint 1, the project should produce reproducible baseline results for:
-
-```text
-OpenJev zero-shot
-Qwen zero-shot
-BioBERT supervised
-BiomedBERT/PubMedBERT supervised
-BioLinkBERT supervised
-```
-
-across the selected biomedical NLI and relation datasets. That becomes the frozen benchmark foundation for PubMed domain adaptation and subsequent BioJev training.
+Sprint 2 answers only the domain-adaptation question. It does **not** use BioNLI/NLI4CT supervision to turn BioQwen into BioJev. Decision adaptation, multi-dataset transfer and calibration experiments belong to later sprints.

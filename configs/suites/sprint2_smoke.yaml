@@ -1,0 +1,22 @@
+output_root: results/sprint2_smoke
+fail_fast: true
+max_examples: 25
+seeds: [42]
+models:
+  - name: qwen35_4b_base
+    config: configs/models/qwen35_4b_base_likelihood.yaml
+    batch_size: 1
+  - name: bioqwen_100m
+    config: configs/models/bioqwen_local.yaml
+    batch_size: 1
+datasets:
+  - name: bionli
+    split: test
+  - name: nli4ct
+    split: test
+  - name: chemprot
+    split: test
+  - name: ddi2013
+    split: test
+  - name: biored
+    split: test

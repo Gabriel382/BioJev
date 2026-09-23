@@ -9,6 +9,9 @@ src/biojev.egg-info/SOURCES.txt
 src/biojev.egg-info/dependency_links.txt
 src/biojev.egg-info/requires.txt
 src/biojev.egg-info/top_level.txt
+src/biojev/corpus/__init__.py
+src/biojev/corpus/biomedical_stream.py
+src/biojev/corpus/packing.py
 src/biojev/datasets/__init__.py
 src/biojev/datasets/base.py
 src/biojev/datasets/bigbio_re.py
@@ -25,11 +28,15 @@ src/biojev/evaluation/evaluator.py
 src/biojev/evaluation/metrics.py
 src/biojev/models/__init__.py
 src/biojev/models/base.py
+src/biojev/models/causal.py
+src/biojev/models/causal_choice.py
 src/biojev/models/generative.py
 src/biojev/models/openjev.py
 src/biojev/models/registry.py
 src/biojev/models/seqcls.py
 src/biojev/training/__init__.py
+src/biojev/training/callbacks.py
+src/biojev/training/dapt.py
 src/biojev/training/seqcls.py
 src/biojev/transformations/__init__.py
 src/biojev/transformations/hypotheses.py
@@ -37,6 +44,8 @@ src/biojev/utils/__init__.py
 src/biojev/utils/environment.py
 src/biojev/utils/io.py
 src/biojev/utils/seed.py
+tests/test_corpus.py
 tests/test_hypotheses.py
 tests/test_metrics.py
+tests/test_packing.py
 tests/test_splitting.py

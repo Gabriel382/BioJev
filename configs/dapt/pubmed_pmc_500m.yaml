@@ -1,0 +1,57 @@
+run_name: bioqwen-pubmed-pmc-500m
+seed: 42
+output_dir: outputs/bioqwen/pubmed_pmc_500m
+
+model:
+  base_model: Qwen/Qwen3.5-4B-Base
+
+corpus:
+  token_budget: 500000000
+  sequence_length: 2048
+  shuffle: true
+  add_eos_between_documents: true
+  sources:
+    - name: pubmed
+      dataset: slinusc/PubMedAbstractsSubset
+      split: train
+      weight: 0.8
+      title_field: title
+      abstract_field: abstract
+      id_field: PMID
+      min_chars: 100
+      shuffle_buffer: 10000
+    - name: pmc
+      dataset: aochongoliverli/pmc_openaccess_split
+      split: main
+      trust_remote_code: false
+      weight: 0.2
+      text_field: text
+      id_field: pmid
+      commercial_only: true
+      skip_retracted: true
+      min_chars: 300
+      shuffle_buffer: 5000
+
+training:
+  # Change to lora or full without changing the corpus/evaluation pipeline.
+  method: qlora
+  mixed_precision: bfloat16
+  per_device_batch_size: 1
+  gradient_accumulation_steps: 16
+  learning_rate: 2.0e-5
+  weight_decay: 0.1
+  warmup_ratio: 0.03
+  lr_scheduler_type: cosine
+  gradient_checkpointing: true
+  optimizer: adamw_torch
+  logging_steps: 10
+  save_steps: 1000
+  save_total_limit: 3
+  dataloader_num_workers: 0
+  report_to: [tensorboard]
+  tf32: true
+  lora:
+    r: 16
+    alpha: 32
+    dropout: 0.05
+    target_modules: all-linear

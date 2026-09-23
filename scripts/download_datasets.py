@@ -42,6 +42,8 @@ def main():
     if not names and not args.mednli_dir:
         parser.error("Specify dataset names, --all, or --mednli-dir")
 
+    summary: dict[str, dict[str, int]] = {}
+
     for name in names:
         # Default preparation is safely resumable. Relation-negative generation changes
         # the benchmark definition, so it is always rebuilt unless explicitly cached later.
@@ -50,6 +52,7 @@ def main():
             if counts:
                 print(f"[cached] {name}")
                 print("  " + ", ".join(f"{split}={count}" for split, count in counts.items()))
+                summary[name] = counts
                 continue
 
         kwargs = {}
@@ -65,12 +68,29 @@ def main():
                     "Reinstall BioJev with: python -m pip install -e \".[dev,plots,notebook]\""
                 ) from exc
             raise
-        print("  " + ", ".join(f"{split}={len(rows)}" for split, rows in prepared.items()))
+        counts = {split: len(rows) for split, rows in prepared.items()}
+        print("  " + ", ".join(f"{split}={count}" for split, count in counts.items()))
+        summary[name] = counts
 
     if args.mednli_dir:
         print("[prepare] mednli (manual source)")
         prepared = MedNLIAdapter(args.mednli_dir).prepare(force=args.force)
-        print("  " + ", ".join(f"{split}={len(rows)}" for split, rows in prepared.items()))
+        counts = {split: len(rows) for split, rows in prepared.items()}
+        print("  " + ", ".join(f"{split}={count}" for split, count in counts.items()))
+        summary["mednli"] = counts
+
+    if summary:
+        print("\nDataset summary")
+        print(f"{'dataset':<12} {'splits':<46} {'total':>10}")
+        print("-" * 72)
+        grand_total = 0
+        for dataset_name, counts in summary.items():
+            total = sum(counts.values())
+            grand_total += total
+            split_text = ", ".join(f"{k}={v:,}" for k, v in counts.items())
+            print(f"{dataset_name:<12} {split_text:<46} {total:>10,}")
+        print("-" * 72)
+        print(f"{'TOTAL':<59} {grand_total:>10,}")
 
 
 if __name__ == "__main__":

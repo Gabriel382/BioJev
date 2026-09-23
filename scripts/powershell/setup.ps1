@@ -2,4 +2,4 @@ $ErrorActionPreference = "Stop"
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev,plots,notebook]"
+python -m pip install -e ".[dev,plots,notebook,train]"

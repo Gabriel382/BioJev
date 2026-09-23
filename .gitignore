@@ -20,3 +20,9 @@ results/*
 *.safetensors
 *.bin
 *.pt
+outputs/*
+!outputs/bioqwen/
+outputs/bioqwen/*
+!outputs/bioqwen/.gitkeep
+exports/
+logs/
