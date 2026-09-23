@@ -1,0 +1,21 @@
+output_root: results/sprint1
+fail_fast: false
+seeds: [42, 123, 456]
+models:
+  - name: openjev
+    config: configs/models/openjev.yaml
+    batch_size: 8
+  - name: qwen35_4b
+    config: configs/models/qwen35_4b.yaml
+    batch_size: 1
+datasets:
+  - name: bionli
+    split: test
+  - name: nli4ct
+    split: test
+  - name: chemprot
+    split: test
+  - name: ddi2013
+    split: test
+  - name: biored
+    split: test

@@ -1,0 +1,20 @@
+checkpoint_root: checkpoints
+seeds: [42, 123, 456]
+epochs: 3
+batch_size: 16
+learning_rate: 2.0e-5
+max_length: 512
+fail_fast: false
+models:
+  - name: biobert
+    repo_id: dmis-lab/biobert-base-cased-v1.2
+  - name: pubmedbert
+    repo_id: microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext
+  - name: biolinkbert
+    repo_id: michiyasunaga/BioLinkBERT-base
+datasets:
+  - bionli
+  - nli4ct
+  - chemprot
+  - ddi2013
+  - biored

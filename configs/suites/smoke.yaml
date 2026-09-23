@@ -1,0 +1,11 @@
+output_root: results/smoke
+max_examples: 16
+fail_fast: false
+seeds: [42]
+models:
+  - name: openjev
+    config: configs/models/openjev.yaml
+    batch_size: 2
+datasets:
+  - name: bionli
+    split: test

@@ -1,0 +1,7 @@
+kind: openjev
+params:
+  repo_id: AlexWortega/openjev
+  subfolder: qwen3.5-4b-nli-v2
+  device: auto
+  max_length: 2048
+  torch_dtype: bfloat16

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biojev"
+version = "0.1.0"
+description = "Sprint 1 reproducible benchmark foundation for BioJev"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Gabriel Henrique Alencar Medeiros"}]
+dependencies = [
+  "torch>=2.3",
+  "transformers>=4.55",
+  "datasets>=3.6,<4",
+  "accelerate>=1.2",
+  "scikit-learn>=1.5",
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "pyyaml>=6.0",
+  "pydantic>=2.8",
+  "requests>=2.32",
+  "tqdm>=4.66",
+  "huggingface-hub>=0.27",
+  "safetensors>=0.4",
+  "sentencepiece>=0.2",
+  "bioc>=2.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3", "ruff>=0.8"]
+plots = ["matplotlib>=3.9"]
+notebook = ["jupyterlab>=4.2", "ipykernel>=6.29"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

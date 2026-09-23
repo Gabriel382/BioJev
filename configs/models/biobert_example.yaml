@@ -1,0 +1,6 @@
+# Point this config to a checkpoint produced by scripts/train_baseline.py.
+kind: seqcls
+params:
+  checkpoint: checkpoints/biobert_bionli_seed42
+  device: auto
+  max_length: 512
