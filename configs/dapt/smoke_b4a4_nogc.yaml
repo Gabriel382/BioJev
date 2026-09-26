@@ -1,13 +1,13 @@
-run_name: bioqwen-pubmed-pmc-100m
+run_name: bioqwen-smoke
 seed: 42
-output_dir: outputs/bioqwen/pubmed_pmc_100m
+output_dir: outputs/bioqwen/smoke_b4a4_nogc
 
 model:
   base_model: Qwen/Qwen3.5-4B-Base
 
 corpus:
-  token_budget: 100000000
-  sequence_length: 2048
+  token_budget: 50000
+  sequence_length: 1024
   shuffle: true
   add_eos_between_documents: true
   sources:
@@ -19,7 +19,7 @@ corpus:
       abstract_field: abstract
       id_field: PMID
       min_chars: 100
-      shuffle_buffer: 10000
+      shuffle_buffer: 2000
     - name: pmc
       dataset: aochongoliverli/pmc_openaccess_split
       split: main
@@ -30,23 +30,22 @@ corpus:
       commercial_only: true
       skip_retracted: true
       min_chars: 300
-      shuffle_buffer: 5000
+      shuffle_buffer: 1000
 
 training:
-  # Change to lora or full without changing the corpus/evaluation pipeline.
   method: qlora
   mixed_precision: bfloat16
-  per_device_batch_size: 1
-  gradient_accumulation_steps: 16
+  per_device_batch_size: 4
+  gradient_accumulation_steps: 4
   learning_rate: 2.0e-5
   weight_decay: 0.1
   warmup_ratio: 0.03
   lr_scheduler_type: cosine
-  gradient_checkpointing: true
+  gradient_checkpointing: false
   optimizer: adamw_torch
-  logging_steps: 10
-  save_steps: 100
-  save_total_limit: 3
+  logging_steps: 1
+  save_steps: 25
+  save_total_limit: 2
   dataloader_num_workers: 0
   report_to: [tensorboard]
   tf32: true

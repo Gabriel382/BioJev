@@ -1,12 +1,12 @@
 run_name: bioqwen-pubmed-pmc-100m
 seed: 42
-output_dir: outputs/bioqwen/pubmed_pmc_100m
+output_dir: outputs/bioqwen/benchmark_2048_b1a16_gc
 
 model:
   base_model: Qwen/Qwen3.5-4B-Base
 
 corpus:
-  token_budget: 100000000
+  token_budget: 131072
   sequence_length: 2048
   shuffle: true
   add_eos_between_documents: true

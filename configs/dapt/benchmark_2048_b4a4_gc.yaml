@@ -1,12 +1,12 @@
 run_name: bioqwen-pubmed-pmc-100m
 seed: 42
-output_dir: outputs/bioqwen/pubmed_pmc_100m
+output_dir: outputs/bioqwen/benchmark_2048_b4a4_gc
 
 model:
   base_model: Qwen/Qwen3.5-4B-Base
 
 corpus:
-  token_budget: 100000000
+  token_budget: 131072
   sequence_length: 2048
   shuffle: true
   add_eos_between_documents: true
@@ -36,8 +36,8 @@ training:
   # Change to lora or full without changing the corpus/evaluation pipeline.
   method: qlora
   mixed_precision: bfloat16
-  per_device_batch_size: 1
-  gradient_accumulation_steps: 16
+  per_device_batch_size: 4
+  gradient_accumulation_steps: 4
   learning_rate: 2.0e-5
   weight_decay: 0.1
   warmup_ratio: 0.03
