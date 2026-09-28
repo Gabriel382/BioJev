@@ -1,0 +1,15 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+BioJev runtime
+  device:            cuda
+  GPU:               NVIDIA RTX 6000 Ada Generation
+  requested method:  qlora
+  effective method:  qlora
+  precision:         bfloat16
+BioJev corpus preflight
+  corpus OK: pubmed   slinusc/PubMedAbstractsSubset split=train sample_chars=2,215
+  corpus OK: pmc      aochongoliverli/pmc_openaccess_split split=main sample_chars=74,230
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files: 100%|██████████| 2/2 [00:00<00:00, 665.23it/s]
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights:   0%|          | 1/426 [00:00<01:04,  6.59it/s]Loading weights:   8%|▊         | 36/426 [00:00<00:02, 170.16it/s]Loading weights:  19%|█▊        | 79/426 [00:00<00:01, 271.50it/s]Loading weights:  28%|██▊       | 120/426 [00:00<00:00, 319.72it/s]Loading weights:  39%|███▉      | 168/426 [00:00<00:00, 371.67it/s]Loading weights:  49%|████▊     | 207/426 [00:00<00:00, 376.81it/s]Loading weights:  60%|█████▉    | 254/426 [00:00<00:00, 402.08it/s]Loading weights:  71%|███████▏  | 304/426 [00:00<00:00, 429.59it/s]Loading weights:  82%|████████▏ | 348/426 [00:00<00:00, 423.09it/s]Loading weights:  93%|█████████▎| 396/426 [00:01<00:00, 439.00it/s]Loading weights: 100%|██████████| 426/426 [00:01<00:00, 368.49it/s]
+/home/galencarmedeiro/git/postdoc/BioJev/src/biojev/training/dapt.py:316: RuntimeWarning: Installed transformers.TrainingArguments does not support these BioJev options; they will be skipped: save_safetensors
+  training_args_kwargs, skipped_training_args = _compatible_training_arguments(
+  0%|          | 0/4 [00:00<?, ?it/s]

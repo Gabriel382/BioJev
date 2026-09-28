@@ -1,0 +1,29 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+BioJev runtime
+  device:            cuda
+  GPU:               NVIDIA RTX 6000 Ada Generation
+  requested method:  qlora
+  effective method:  qlora
+  precision:         bfloat16
+BioJev corpus preflight
+  corpus OK: pubmed   slinusc/PubMedAbstractsSubset split=train sample_chars=2,215
+  corpus OK: pmc      aochongoliverli/pmc_openaccess_split split=main sample_chars=74,230
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files: 100%|██████████| 2/2 [00:00<00:00, 746.58it/s]
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights:   0%|          | 1/426 [00:00<01:04,  6.60it/s]Loading weights:   8%|▊         | 36/426 [00:00<00:02, 172.69it/s]Loading weights:  19%|█▊        | 79/426 [00:00<00:01, 273.77it/s]Loading weights:  28%|██▊       | 119/426 [00:00<00:00, 319.06it/s]Loading weights:  37%|███▋      | 159/426 [00:00<00:00, 344.28it/s]Loading weights:  48%|████▊     | 204/426 [00:00<00:00, 376.73it/s]Loading weights:  59%|█████▉    | 252/426 [00:00<00:00, 406.08it/s]Loading weights:  69%|██████▉   | 294/426 [00:00<00:00, 406.18it/s]Loading weights:  81%|████████  | 343/426 [00:00<00:00, 430.62it/s]Loading weights:  91%|█████████ | 387/426 [00:01<00:00, 423.21it/s]Loading weights: 100%|██████████| 426/426 [00:01<00:00, 365.48it/s]
+/home/galencarmedeiro/git/postdoc/BioJev/src/biojev/training/dapt.py:316: RuntimeWarning: Installed transformers.TrainingArguments does not support these BioJev options; they will be skipped: save_safetensors
+  training_args_kwargs, skipped_training_args = _compatible_training_arguments(
+  0%|          | 0/4 [00:00<?, ?it/s] 25%|██▌       | 1/4 [03:17<09:53, 197.98s/it]                                               25%|██▌       | 1/4 [03:17<09:53, 197.98s/it] 50%|█████     | 2/4 [03:25<02:51, 85.92s/it]                                               50%|█████     | 2/4 [03:25<02:51, 85.92s/it] 75%|███████▌  | 3/4 [03:33<00:50, 50.23s/it]                                              75%|███████▌  | 3/4 [03:33<00:50, 50.23s/it]100%|██████████| 4/4 [06:45<00:00, 106.40s/it]                                              100%|██████████| 4/4 [06:45<00:00, 106.40s/it]                                              100%|██████████| 4/4 [06:46<00:00, 106.40s/it]100%|██████████| 4/4 [06:46<00:00, 101.62s/it]
+{'loss': '1.844', 'grad_norm': '0.2428', 'learning_rate': '0', 'epoch': '0.25'}
+{'loss': '1.903', 'grad_norm': '0.2417', 'learning_rate': '2e-05', 'epoch': '0.5'}
+{'loss': '1.718', 'grad_norm': '0.2898', 'learning_rate': '1.5e-05', 'epoch': '0.75'}
+{'loss': '4.047', 'grad_norm': '0.9726', 'learning_rate': '5e-06', 'epoch': '1.25'}
+{'train_runtime': '406.5', 'train_samples_per_second': '0.157', 'train_steps_per_second': '0.01', 'train_loss': '2.378', 'epoch': '1.25'}
+
+BioQwen DAPT complete
+  checkpoint: outputs/bioqwen/smoke_b2a8_gc/final
+  token budget: 50,000
+  sequence length: 1,024
+  optimizer steps: 4
+real 424.21
+user 201.51
+sys 26.61
