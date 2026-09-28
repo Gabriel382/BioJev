@@ -1,0 +1,38 @@
+run_name: biojev-nano-full-mednli
+seed: 42
+output_dir: outputs/biojev/nano_full_mednli
+model:
+  initialization: qwen_seqcls
+  base_model: Qwen/Qwen3.5-0.8B-Base
+  dapt_adapter: outputs/biojev-nano/final
+  max_length: 512
+training:
+  method: qlora
+  mixed_precision: auto
+  per_device_batch_size: 4
+  eval_batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  gradient_checkpointing: false
+  logging_steps: 10
+  eval_steps: 200
+  save_steps: 200
+  save_total_limit: 2
+  report_to: [tensorboard]
+stages:
+  - name: general-nli
+    epochs: 1
+    epoch_examples: 100000
+    datasets:
+      - {name: snli, weight: 0.35}
+      - {name: mnli, weight: 0.45}
+      - {name: anli_r1, weight: 0.20}
+  - name: biomedical
+    epochs: 1
+    epoch_examples: 45000
+    datasets:
+      - {name: bionli, weight: 0.60}
+      - {name: nli4ct, weight: 0.20}
+      - {name: mednli, weight: 0.20}

@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: biojev
-Version: 0.2.1
+Version: 0.3.0
 Summary: BioJev: biomedical decision-model benchmark and domain-adaptation research framework
 Author: Gabriel Henrique Alencar Medeiros
 License: MIT
@@ -39,34 +39,23 @@ Dynamic: license-file
 
 # BioJev
 
-BioJev is a biomedical decision-model research project built from the OpenJev/Qwen3.5 line. The repository is organized as cumulative, reproducible sprints.
+BioJev is a biomedical decision-model research project built from the OpenJev/Qwen3.5 line. The repository is cumulative and reproducible: Sprint 1 builds the benchmark, Sprint 2 performs PubMed/PMC domain-adaptive pretraining (BioQwen), and **Sprint 3 builds the actual biomedical decision model**.
 
-**Sprint 1** builds the multi-dataset biomedical benchmark. **Sprint 2** builds **BioQwen**, a biomedical domain-adapted Qwen3.5 backbone using continued causal language-model pretraining on streaming PubMed/PMC text. BioJev decision/NLI training comes later.
+The development strategy is **Nano first**: complete every sprint with Qwen3.5-0.8B, then rerun the same code/config structure at 4B and larger scales.
 
-## What Sprint 2 adds
+Sprint 3 adds weighted decision/NLI training, current OpenJev v5 baselines, and the main **Base-aligned BioJev lineage**: Sprint-2 biomedical DAPT -> general NLI/OpenJev-style decision training -> biomedical NLI. It also adds a typed `decide(context, hypotheses)` interface. OpenJev is kept as a baseline/adaptation comparison rather than mixed with a DAPT adapter trained against a different parent checkpoint.
 
-```text
-Qwen/Qwen3.5-4B-Base
-        |
-        | continued biomedical pretraining
-        | PubMed abstracts + PMC Open Access
-        v
-     BioQwen
-        |
-        +--> held-out biomedical perplexity
-        +--> Sprint-1 multi-dataset comparison
-```
-
-The pipeline supports 100M, 500M, 1B and 3B token budgets; QLoRA, LoRA and full fine-tuning; mixed precision; gradient accumulation; checkpoint/resume; Accelerate multi-GPU training; JSONL/TensorBoard/W&B logging; and Hugging Face export.
+See `docs/SPRINT3.md` for the current workflow.
 
 ## Repository layout
 
 ```text
 BioJev/
 ├── configs/
-│   ├── dapt/                    # 50K smoke + 100M/500M/1B/3B corpus budgets
-│   ├── models/                  # OpenJev/Qwen/BioQwen evaluators
-│   └── suites/                  # Sprint-1 and Sprint-2 benchmark matrices
+│   ├── dapt/                    # Sprint-2 biomedical DAPT budgets
+│   ├── decision/                # Sprint-3 decision-training recipes
+│   ├── models/                  # OpenJev, Qwen, BioQwen and local BioJev models
+│   └── suites/                  # reproducible evaluation matrices
 ├── data/
 │   ├── raw/
 │   └── processed/
@@ -74,23 +63,25 @@ BioJev/
 │   ├── DATASETS.md
 │   ├── CORPUS.md
 │   ├── EXPERIMENT_PROTOCOL.md
-│   └── SPRINT2.md
+│   ├── SPRINT2.md
+│   └── SPRINT3.md
 ├── notebooks/
-│   ├── 01_sprint1_walkthrough.py
-│   ├── 01_sprint1_walkthrough.ipynb
-│   ├── 02_sprint2_walkthrough.py
-│   └── 02_sprint2_walkthrough.ipynb
-├── outputs/bioqwen/             # ignored training outputs
+│   ├── 01_sprint1_walkthrough.py/.ipynb
+│   ├── 02_sprint2_walkthrough.py/.ipynb
+│   └── 03_sprint3_walkthrough.py/.ipynb
+├── outputs/
+│   ├── bioqwen/                 # ignored DAPT outputs
+│   └── biojev/                  # ignored decision-model outputs
 ├── scripts/
 │   ├── powershell/
 │   ├── download_datasets.py
-│   ├── inspect_corpus.py
 │   ├── train_dapt.py
-│   ├── evaluate_perplexity.py
-│   ├── export_hf.py
+│   ├── plan_decision.py
+│   ├── train_decision.py
+│   ├── decide.py
+│   ├── export_biojev_hf.py
 │   ├── evaluate.py
-│   ├── run_suite.py
-│   └── compare_sprint2.py
+│   └── run_suite.py
 ├── src/biojev/
 │   ├── corpus/
 │   ├── datasets/
@@ -356,8 +347,36 @@ then open:
 notebooks/02_sprint2_walkthrough.ipynb
 ```
 
-See `docs/SPRINT2.md` for the detailed experimental protocol.
+See `docs/SPRINT2.md` for the Sprint-2 domain-adaptation protocol.
+
+## 13. Sprint 3 — BioJev decision model
+
+The default development path uses the already-trained Nano DAPT adapter:
+
+```text
+Qwen3.5-0.8B-Base
+  -> biomedical DAPT (Sprint 2)
+  -> general NLI decision training
+  -> biomedical NLI decision training
+  -> BioJev-Nano
+```
+
+PowerShell:
+
+```powershell
+python scripts\download_datasets.py --sprint3-general
+python scripts\plan_decision.py --config configs\decision\nano_full.yaml
+python scripts\train_decision.py --config configs\decision\nano_full.yaml
+```
+
+The final Nano decision checkpoint is written to:
+
+```text
+outputs/biojev/nano_full/stage-02-biomedical/final
+```
+
+The same training code is used by `configs/decision/4b_full.yaml` after the 4B DAPT checkpoint exists. See `docs/SPRINT3.md` and `notebooks/03_sprint3_walkthrough.*` for the complete workflow.
 
 ## Research scope
 
-Sprint 2 answers only the domain-adaptation question. It does **not** use BioNLI/NLI4CT supervision to turn BioQwen into BioJev. Decision adaptation, multi-dataset transfer and calibration experiments belong to later sprints.
+Sprint 3 establishes the reusable BioJev decision-training stack and its key lineage ablations. Multi-dataset transfer, reliability/calibration and the exhaustive paper ablations remain the focus of later sprints.

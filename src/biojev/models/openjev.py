@@ -21,7 +21,7 @@ class OpenJevModel(BenchmarkModel):
     def __init__(
         self,
         repo_id: str = "AlexWortega/openjev",
-        subfolder: str = "qwen3.5-4b-nli-v2",
+        subfolder: str = "qwen3.5-4b-nli-v5",
         device: str = "auto",
         max_length: int = 2048,
         torch_dtype: str = "bfloat16",

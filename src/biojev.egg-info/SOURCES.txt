@@ -17,6 +17,7 @@ src/biojev/datasets/base.py
 src/biojev/datasets/bigbio_re.py
 src/biojev/datasets/bionli.py
 src/biojev/datasets/common.py
+src/biojev/datasets/general_nli.py
 src/biojev/datasets/mednli.py
 src/biojev/datasets/nli4ct.py
 src/biojev/datasets/registry.py
@@ -30,6 +31,7 @@ src/biojev/models/__init__.py
 src/biojev/models/base.py
 src/biojev/models/causal.py
 src/biojev/models/causal_choice.py
+src/biojev/models/decision.py
 src/biojev/models/generative.py
 src/biojev/models/openjev.py
 src/biojev/models/registry.py
@@ -37,6 +39,8 @@ src/biojev/models/seqcls.py
 src/biojev/training/__init__.py
 src/biojev/training/callbacks.py
 src/biojev/training/dapt.py
+src/biojev/training/decision.py
+src/biojev/training/decision_data.py
 src/biojev/training/seqcls.py
 src/biojev/transformations/__init__.py
 src/biojev/transformations/hypotheses.py
@@ -45,6 +49,8 @@ src/biojev/utils/environment.py
 src/biojev/utils/io.py
 src/biojev/utils/seed.py
 tests/test_corpus.py
+tests/test_decision_config.py
+tests/test_decision_data.py
 tests/test_hypotheses.py
 tests/test_metrics.py
 tests/test_packing.py

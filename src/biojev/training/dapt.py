@@ -16,7 +16,6 @@ from biojev.corpus import (
     PackedTokenStream,
     estimate_sequence_count,
     load_corpus_sources,
-    probe_corpus_sources,
 )
 from biojev.models.causal import load_causal_model
 from biojev.training.callbacks import JsonlLogCallback
@@ -246,11 +245,6 @@ def train_dapt(config: dict[str, Any], *, resume_from_checkpoint: str | bool | N
     if runtime.fallback_reason:
         print(f"  fallback:          {runtime.fallback_reason}")
 
-    # Fail fast on remote corpus/schema problems before loading the 4B model.
-    sources = load_corpus_sources(corpus_cfg)
-    print("BioJev corpus preflight")
-    corpus_preflight = probe_corpus_sources(sources)
-
     model, tokenizer = load_causal_model(
         model_cfg.get("base_model", "Qwen/Qwen3.5-4B"),
         mode="train",
@@ -264,6 +258,7 @@ def train_dapt(config: dict[str, Any], *, resume_from_checkpoint: str | bool | N
         model.gradient_checkpointing_enable()
     model = _configure_peft(model, effective_train_cfg)
 
+    sources = load_corpus_sources(corpus_cfg)
     docs = BiomedicalCorpusStream(
         sources,
         partition="train",
@@ -348,7 +343,6 @@ def train_dapt(config: dict[str, Any], *, resume_from_checkpoint: str | bool | N
         "max_steps": max_steps,
         "train_metrics": train_output.metrics,
         "sources": [s.__dict__ for s in sources],
-        "corpus_preflight": corpus_preflight,
         "transformers_version": __import__("transformers").__version__,
         "skipped_training_arguments": skipped_training_args,
         "config": config,

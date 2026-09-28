@@ -9,6 +9,7 @@ from biojev.datasets.registry import get_adapter
 from biojev.utils.io import read_jsonl
 
 DEFAULT = ["bionli", "nli4ct", "chemprot", "ddi2013", "biored"]
+SPRINT3_GENERAL = ["snli", "mnli", "anli_r1"]
 
 
 def _existing_counts(name: str, processed_root: Path = Path("data/processed")) -> dict[str, int]:
@@ -32,15 +33,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("datasets", nargs="*", help="Dataset names")
     parser.add_argument("--all", action="store_true", help="Prepare all public Sprint-1 datasets")
+    parser.add_argument("--sprint3-general", action="store_true", help="Prepare SNLI, MNLI and ANLI-R1 for generic decision bootstrapping")
     parser.add_argument("--force", action="store_true", help="Re-download/rebuild even if processed files exist")
     parser.add_argument("--include-no-relation", action="store_true")
     parser.add_argument("--negative-ratio", type=float, default=1.0)
     parser.add_argument("--mednli-dir", type=str, default=None)
     args = parser.parse_args()
 
-    names = DEFAULT if args.all else args.datasets
+    names = DEFAULT if args.all else (SPRINT3_GENERAL if args.sprint3_general else args.datasets)
     if not names and not args.mednli_dir:
-        parser.error("Specify dataset names, --all, or --mednli-dir")
+        parser.error("Specify dataset names, --all, --sprint3-general, or --mednli-dir")
 
     summary: dict[str, dict[str, int]] = {}
 
