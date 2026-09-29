@@ -49,9 +49,11 @@ src/biojev/utils/environment.py
 src/biojev/utils/io.py
 src/biojev/utils/seed.py
 tests/test_corpus.py
+tests/test_dapt_to_decision_transfer.py
 tests/test_decision_config.py
 tests/test_decision_data.py
 tests/test_hypotheses.py
 tests/test_metrics.py
 tests/test_packing.py
+tests/test_padding_sync.py
 tests/test_splitting.py

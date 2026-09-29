@@ -1,48 +1,46 @@
 run_name: biojev-4b-full
 seed: 42
 output_dir: outputs/biojev/4b_full
-
 model:
   initialization: qwen_seqcls
   base_model: Qwen/Qwen3.5-4B-Base
   dapt_adapter: outputs/bioqwen/pubmed_pmc_100m/final
   max_length: 2048
-
 training:
   method: qlora
   mixed_precision: auto
   per_device_batch_size: 1
   eval_batch_size: 4
   gradient_accumulation_steps: 16
-  learning_rate: 1.0e-5
+  learning_rate: 1.0e-05
   weight_decay: 0.01
   warmup_ratio: 0.03
   gradient_checkpointing: true
   logging_steps: 10
-  eval_steps: 200
+  eval_steps: 1000
   save_steps: 200
   save_total_limit: 2
-  report_to: [tensorboard]
-
+  report_to:
+  - tensorboard
+  load_best_model_at_end: false
 stages:
-  - name: general-nli
-    epochs: 1
-    max_length: 2048
-    epoch_examples: 100000
-    datasets:
-      - name: snli
-        weight: 0.35
-      - name: mnli
-        weight: 0.45
-      - name: anli_r1
-        weight: 0.20
-
-  - name: biomedical
-    epochs: 1
-    max_length: 2048
-    epoch_examples: 40000
-    datasets:
-      - name: bionli
-        weight: 0.75
-      - name: nli4ct
-        weight: 0.25
+- name: general-nli
+  epochs: 1
+  max_length: 512
+  epoch_examples: 100000
+  datasets:
+  - name: snli
+    weight: 0.35
+  - name: mnli
+    weight: 0.45
+  - name: anli_r1
+    weight: 0.2
+- name: biomedical
+  epochs: 1
+  max_length: 2048
+  epoch_examples: 40000
+  datasets:
+  - name: bionli
+    weight: 0.75
+  - name: nli4ct
+    weight: 0.25

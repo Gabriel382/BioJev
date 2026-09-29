@@ -482,7 +482,7 @@ def train_decision(config: dict[str, Any]) -> DecisionTrainResult:
             save_strategy="steps",
             save_steps=int(train_cfg.get("save_steps", 100)),
             save_total_limit=int(train_cfg.get("save_total_limit", 2)),
-            load_best_model_at_end=True,
+            load_best_model_at_end=bool(train_cfg.get("load_best_model_at_end", False)),
             metric_for_best_model="f1_macro",
             greater_is_better=True,
             bf16=precision == "bfloat16",
