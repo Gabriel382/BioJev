@@ -15,6 +15,78 @@ from biojev.transformations.hypotheses import relation_hypothesis
 DEFAULT_TEMPLATE = "Premise: {premise}\nHypothesis: {hypothesis}"
 
 
+def _synchronize_padding_token(model, tokenizer) -> int:
+    """Synchronize tokenizer padding with the effective config used by Qwen3.5.
+
+    Transformers 5.x sequence classification reads the nested text config for
+    composite models such as Qwen3.5. PEFT can add one or more wrapper layers,
+    so update every reachable config after the final adapter has been loaded.
+    """
+    if tokenizer.pad_token_id is None:
+        if tokenizer.eos_token_id is None:
+            raise RuntimeError(
+                "BioJev inference requires a padding token, but the tokenizer "
+                "defines neither pad_token_id nor eos_token_id."
+            )
+        tokenizer.pad_token = tokenizer.eos_token
+
+    pad_token_id = int(tokenizer.pad_token_id)
+    seen_models: set[int] = set()
+    seen_configs: set[int] = set()
+
+    def sync_config(cfg) -> None:
+        if cfg is None or id(cfg) in seen_configs:
+            return
+        seen_configs.add(id(cfg))
+        if hasattr(cfg, "pad_token_id"):
+            cfg.pad_token_id = pad_token_id
+        getter = getattr(cfg, "get_text_config", None)
+        if callable(getter):
+            try:
+                text_cfg = getter()
+            except TypeError:
+                text_cfg = None
+            if text_cfg is not None and text_cfg is not cfg:
+                sync_config(text_cfg)
+        text_cfg = getattr(cfg, "text_config", None)
+        if text_cfg is not None and text_cfg is not cfg:
+            sync_config(text_cfg)
+
+    queue = [model]
+    while queue:
+        current = queue.pop()
+        if current is None or id(current) in seen_models:
+            continue
+        seen_models.add(id(current))
+        sync_config(getattr(current, "config", None))
+        gen_cfg = getattr(current, "generation_config", None)
+        if gen_cfg is not None and hasattr(gen_cfg, "pad_token_id"):
+            gen_cfg.pad_token_id = pad_token_id
+        for attr in ("base_model", "model", "module"):
+            child = getattr(current, attr, None)
+            if child is not None and child is not current:
+                queue.append(child)
+
+    # Verify the exact config path used by Transformers' generic sequence
+    # classification forward where possible.
+    root_cfg = getattr(model, "config", None)
+    effective_cfg = root_cfg
+    if root_cfg is not None:
+        getter = getattr(root_cfg, "get_text_config", None)
+        if callable(getter):
+            try:
+                effective_cfg = getter()
+            except TypeError:
+                effective_cfg = root_cfg
+    effective_pad = getattr(effective_cfg, "pad_token_id", None)
+    if effective_pad != pad_token_id:
+        raise RuntimeError(
+            "BioJev Sprint 4 failed to synchronize the effective text config "
+            f"pad_token_id (tokenizer={pad_token_id}, model={effective_pad})."
+        )
+    return pad_token_id
+
+
 class BioJevDecisionModel(BenchmarkModel):
     """Load a Sprint-3 BioJev checkpoint and expose NLI + typed decisions."""
 
@@ -69,6 +141,8 @@ class BioJevDecisionModel(BenchmarkModel):
             self.model = AutoModelForSequenceClassification.from_pretrained(
                 str(self.checkpoint), device_map=device, trust_remote_code=True, dtype="auto"
             )
+        pad_token_id = _synchronize_padding_token(self.model, self.tokenizer)
+        print(f"  padding token:      {pad_token_id} (tokenizer/model synchronized for inference)")
         self.model.eval()
         self.template = self.manifest.get("nli_template", getattr(self.model.config, "nli_template", DEFAULT_TEMPLATE))
         raw = self.model.config.id2label or {0: "contradiction", 1: "entailment", 2: "neutral"}
