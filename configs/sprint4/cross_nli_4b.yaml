@@ -1,0 +1,15 @@
+name: sprint4-cross-nli-4b
+output_root: results/sprint4/cross_nli_4b
+seed: 42
+models:
+  - name: biojev-4b-bionli-only
+    config: configs/models/biojev_4b_bionli_only.yaml
+    batch_size: 4
+  - name: biojev-4b-nli4ct-only
+    config: configs/models/biojev_4b_nli4ct_only.yaml
+    batch_size: 4
+datasets:
+  - name: bionli
+    split: test
+  - name: nli4ct
+    split: dev

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import inspect
+import math
 from pathlib import Path
 from typing import Sequence
 
@@ -79,7 +81,7 @@ def train_sequence_classifier(
         }
 
     output_dir = ensure_dir(output_dir)
-    args = TrainingArguments(
+    desired = dict(
         output_dir=str(output_dir),
         seed=seed,
         learning_rate=learning_rate,
@@ -96,6 +98,16 @@ def train_sequence_classifier(
         report_to="none",
         save_total_limit=2,
     )
+    supported = set(inspect.signature(TrainingArguments.__init__).parameters)
+    if "num_train_epochs" not in supported:
+        # Transformers 5.x can expose a max-steps-only TrainingArguments API.
+        # Preserve the requested epoch count deterministically for a single-process run.
+        steps_per_epoch = math.ceil(
+            len(train_ds) / max(1, per_device_batch_size * gradient_accumulation_steps)
+        )
+        desired.pop("num_train_epochs", None)
+        desired["max_steps"] = max(1, math.ceil(float(epochs) * steps_per_epoch))
+    args = TrainingArguments(**{k: v for k, v in desired.items() if k in supported})
     trainer = Trainer(
         model=model,
         args=args,

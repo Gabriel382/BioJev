@@ -1,0 +1,5 @@
+kind: biojev_decision
+params:
+  checkpoint: outputs/biojev/8b_full/stage-02-biomedical/final
+  device: auto
+  max_length: 2048

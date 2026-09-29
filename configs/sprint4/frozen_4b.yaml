@@ -1,0 +1,29 @@
+name: sprint4-frozen-4b
+output_root: results/sprint4/frozen_4b
+seed: 42
+models:
+  - name: qwen35-4b-base
+    config: configs/models/qwen35_4b_base_likelihood.yaml
+    batch_size: 1
+  - name: openjev-4b
+    config: configs/models/openjev.yaml
+    batch_size: 4
+  - name: biojev-4b
+    config: configs/models/biojev_4b_local.yaml
+    batch_size: 4
+datasets:
+  - name: bionli
+    split: test
+    role: held_out_from_single_split
+  - name: nli4ct
+    split: dev
+    role: validation_seen_during_full_training
+  - name: chemprot
+    split: test
+    role: zero_shot_relation_typing
+  - name: ddi2013
+    split: test
+    role: zero_shot_relation_typing
+  - name: biored
+    split: test
+    role: zero_shot_relation_typing

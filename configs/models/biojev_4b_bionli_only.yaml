@@ -1,0 +1,5 @@
+kind: biojev_decision
+params:
+  checkpoint: outputs/biojev/cross_dataset/4b_bionli_only/stage-02-biomedical-bionli-only/final
+  device: auto
+  max_length: 2048

@@ -341,3 +341,27 @@ The same training code is used by `configs/decision/4b_full.yaml` after the 4B D
 ## Research scope
 
 Sprint 3 establishes the reusable BioJev decision-training stack and its key lineage ablations. Multi-dataset transfer, reliability/calibration and the exhaustive paper ablations remain the focus of later sprints.
+
+## 14. Sprint 4 — multi-dataset generalization
+
+Sprint 4 tests BioJev as a frozen biomedical decision model across NLI and relation-typing tasks, and keeps this regime separate from conventional target-supervised encoder baselines.
+
+4B frozen benchmark:
+
+```powershell
+python scripts\run_sprint4_frozen.py `
+  --config configs\sprint4\frozen_4b.yaml `
+  --skip-existing
+```
+
+Nano frozen benchmark, once the Sprint-3 checkpoint exists:
+
+```powershell
+python scripts\run_sprint4_frozen.py `
+  --config configs\sprint4\frozen_nano.yaml `
+  --skip-existing
+```
+
+Source-isolated NLI configs are provided for a genuine BioNLI <-> NLI4CT transfer matrix. Conventional BioBERT/PubMedBERT/BioLinkBERT baselines are run separately with target-task supervision.
+
+See `docs/SPRINT4.md` and `notebooks/04_sprint4_walkthrough.*`.

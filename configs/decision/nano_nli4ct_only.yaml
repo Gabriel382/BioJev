@@ -1,0 +1,44 @@
+run_name: biojev-nano-nli4ct-only
+seed: 42
+output_dir: outputs/biojev/cross_dataset/nano_nli4ct_only
+model:
+  initialization: qwen_seqcls
+  base_model: Qwen/Qwen3.5-0.8B-Base
+  dapt_adapter: outputs/biojev-nano/final
+  max_length: 512
+training:
+  method: qlora
+  mixed_precision: auto
+  per_device_batch_size: 4
+  eval_batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 1.0e-05
+  weight_decay: 0.01
+  warmup_ratio: 0.03
+  gradient_checkpointing: true
+  logging_steps: 10
+  eval_steps: 200
+  save_steps: 200
+  save_total_limit: 2
+  load_best_model_at_end: false
+  report_to:
+  - tensorboard
+stages:
+- name: general-nli
+  epochs: 1
+  max_length: 512
+  epoch_examples: 100000
+  datasets:
+  - name: snli
+    weight: 0.35
+  - name: mnli
+    weight: 0.45
+  - name: anli_r1
+    weight: 0.2
+- name: biomedical-nli4ct-only
+  epochs: 1
+  max_length: 512
+  epoch_examples: 10000
+  datasets:
+  - name: nli4ct
+    weight: 1.0

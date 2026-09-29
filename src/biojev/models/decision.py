@@ -170,7 +170,7 @@ class BioJevDecisionModel(BenchmarkModel):
                     gold=ex.label,
                     prediction=pred,
                     probabilities=probabilities,
-                    metadata={"decision": "argmax entailment across candidate hypotheses"},
+                    metadata={"decision": "argmax entailment across candidate hypotheses", "raw_entailment_scores": label_scores},
                 )
             )
         return output
