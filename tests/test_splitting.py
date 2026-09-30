@@ -14,3 +14,17 @@ def test_split_is_deterministic():
     assert len(a["train"]) == 80
     assert len(a["dev"]) == 10
     assert len(a["test"]) == 10
+
+
+def test_split_keeps_singleton_class_in_train():
+    rows = [
+        NLIExample(id=str(i), dataset="x", split="train", premise="p", hypothesis="h", label="common")
+        for i in range(20)
+    ]
+    rows.append(
+        NLIExample(id="rare", dataset="x", split="train", premise="p", hypothesis="h", label="rare")
+    )
+    parts = stratified_split(rows, seed=7)
+    assert any(x.id == "rare" for x in parts["train"])
+    assert not any(x.id == "rare" for x in parts["dev"])
+    assert not any(x.id == "rare" for x in parts["test"])
