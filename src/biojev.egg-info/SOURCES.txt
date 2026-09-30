@@ -27,6 +27,7 @@ src/biojev/evaluation/__init__.py
 src/biojev/evaluation/calibration.py
 src/biojev/evaluation/evaluator.py
 src/biojev/evaluation/metrics.py
+src/biojev/evaluation/sprint4.py
 src/biojev/models/__init__.py
 src/biojev/models/base.py
 src/biojev/models/causal.py
@@ -57,3 +58,4 @@ tests/test_metrics.py
 tests/test_packing.py
 tests/test_padding_sync.py
 tests/test_splitting.py
+tests/test_sprint4.py
