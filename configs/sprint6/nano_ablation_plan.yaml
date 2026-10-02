@@ -1,0 +1,57 @@
+name: sprint6-nano-ablation
+seed: 42
+dapt_adapter: outputs/biojev-nano/final
+output_root: outputs/biojev/sprint6_nano
+results_root: results/sprint6
+train_script: scripts/train_decision.py
+
+# These are decision-training ablations. The raw base and DAPT-only LM are not
+# assigned random sequence-classification heads, because that would not be an
+# apples-to-apples decision-model comparison.
+variants:
+  - name: general_only
+    config: configs/sprint6/train/general_only.yaml
+    dapt: false
+    stages: [general-nli]
+  - name: biomedical_only
+    config: configs/sprint6/train/biomedical_only.yaml
+    dapt: false
+    stages: [biomedical]
+  - name: dapt_general
+    config: configs/sprint6/train/dapt_general.yaml
+    dapt: true
+    stages: [general-nli]
+  - name: dapt_biomedical
+    config: configs/sprint6/train/dapt_biomedical.yaml
+    dapt: true
+    stages: [biomedical]
+  - name: general_biomedical
+    config: configs/sprint6/train/general_biomedical.yaml
+    dapt: false
+    stages: [general-nli, biomedical]
+  - name: full
+    config: configs/sprint6/train/full.yaml
+    dapt: true
+    stages: [general-nli, biomedical]
+  - name: bionli_only
+    config: configs/sprint6/train/bionli_only.yaml
+    dapt: true
+    stages: [general-nli, biomedical]
+    biomedical_source: bionli
+  - name: nli4ct_only
+    config: configs/sprint6/train/nli4ct_only.yaml
+    dapt: true
+    stages: [general-nli, biomedical]
+    biomedical_source: nli4ct
+
+datasets:
+  - name: bionli
+    split: test
+  - name: nli4ct
+    split: dev
+  - name: chemprot
+    split: test
+  - name: ddi2013
+    split: test
+  - name: biored
+    split: test

@@ -1,0 +1,40 @@
+name: sprint6-nano-ablation-eval
+output_root: results/sprint6/nano_ablation_eval
+seed: 42
+
+models:
+  - name: general_only
+    config: configs/sprint6/models/general_only.yaml
+    batch_size: 16
+  - name: biomedical_only
+    config: configs/sprint6/models/biomedical_only.yaml
+    batch_size: 16
+  - name: dapt_general
+    config: configs/sprint6/models/dapt_general.yaml
+    batch_size: 16
+  - name: dapt_biomedical
+    config: configs/sprint6/models/dapt_biomedical.yaml
+    batch_size: 16
+  - name: general_biomedical
+    config: configs/sprint6/models/general_biomedical.yaml
+    batch_size: 16
+  - name: full
+    config: configs/sprint6/models/full.yaml
+    batch_size: 16
+  - name: bionli_only
+    config: configs/sprint6/models/bionli_only.yaml
+    batch_size: 16
+  - name: nli4ct_only
+    config: configs/sprint6/models/nli4ct_only.yaml
+    batch_size: 16
+datasets:
+  - name: bionli
+    split: test
+  - name: nli4ct
+    split: dev
+  - name: chemprot
+    split: test
+  - name: ddi2013
+    split: test
+  - name: biored
+    split: test

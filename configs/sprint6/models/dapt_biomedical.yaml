@@ -1,0 +1,5 @@
+kind: biojev_decision
+params:
+  checkpoint: outputs/biojev/sprint6_nano/dapt_biomedical/stage-01-biomedical/final
+  device: auto
+  max_length: 512
