@@ -58,3 +58,22 @@ def test_model_configs_point_to_expected_final_stage():
             assert "/stage-01-general-nli/final" in ckpt
         else:
             assert "/stage-01-biomedical/final" in ckpt
+
+
+def test_dapt_bootstrap_config_matches_nano_recipe():
+    cfg = yaml.safe_load((ROOT / "configs/sprint6/dapt_nano_50k.yaml").read_text())
+    assert cfg["model"]["base_model"] == "Qwen/Qwen3.5-0.8B-Base"
+    assert cfg["corpus"]["token_budget"] == 50000
+    assert cfg["corpus"]["sequence_length"] == 512
+    assert cfg["training"]["method"] == "qlora"
+    assert cfg["training"]["per_device_batch_size"] == 4
+    assert cfg["training"]["gradient_accumulation_steps"] == 4
+    assert cfg["training"]["gradient_checkpointing"] is False
+    assert cfg["output_dir"] == "outputs/biojev-nano"
+
+
+def test_dapt_source_weights_sum_to_one():
+    cfg = yaml.safe_load((ROOT / "configs/sprint6/dapt_nano_50k.yaml").read_text())
+    weights = [float(s["weight"]) for s in cfg["corpus"]["sources"]]
+    assert abs(sum(weights) - 1.0) < 1e-9
+    assert {s["name"] for s in cfg["corpus"]["sources"]} == {"pubmed", "pmc"}
