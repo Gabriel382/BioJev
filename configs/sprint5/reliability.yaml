@@ -1,0 +1,54 @@
+version: sprint5-reliability-v2
+output_dir: results/sprint5
+
+# Sprint 5 performs inference-result analysis only. It never trains a model.
+analysis:
+  fixed_bins: 15
+  adaptive_bins: 15
+  high_confidence_threshold: 0.90
+  thresholds: [0.50, 0.60, 0.70, 0.80, 0.85, 0.90, 0.95, 0.975, 0.99]
+  risk_coverage_points: 201
+  min_slice_size: 20
+
+# When true, a normal (non-audit) run aborts if an expected prediction artifact
+# is missing or malformed. This prevents partial Sprint-5 tables from looking complete.
+strict_inputs: true
+
+prediction_filenames:
+  - test_predictions.jsonl
+  - predictions.jsonl
+  - test_predictions.csv
+  - predictions.csv
+  - test_predictions.parquet
+  - predictions.parquet
+  - test_predictions.json
+  - predictions.json
+  - test_predictions.npz
+  - predictions.npz
+
+regimes:
+  frozen_task_general:
+    roots:
+      - results/sprint4/frozen_task_general
+      - results/sprint4/frozen
+      - results/sprint4/frozen_models
+      - results/sprint4
+    models: [qwen, openjev, biojev]
+    datasets: [bionli, nli4ct, chemprot, ddi2013, biored]
+    seeds: []
+
+  supervised_baselines:
+    roots:
+      - checkpoints/sprint4
+      - results/sprint4/supervised_baselines
+    models: [biobert, pubmedbert, biolinkbert]
+    datasets: [bionli, nli4ct, chemprot, ddi2013, biored]
+    seeds: [42, 123, 456]
+
+model_aliases:
+  biolinkbert: [biolinkbert, "michiyasunaga/biolinkbert"]
+  pubmedbert: [pubmedbert, biomedbert, "biomednlp-biomedbert"]
+  biobert: [biobert, "dmis-lab/biobert"]
+  biojev: [biojev]
+  openjev: [openjev]
+  qwen: [qwen35-4b-base, qwen3.5-4b-base, qwen3_5_4b_base, qwen]
