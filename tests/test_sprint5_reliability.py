@@ -48,3 +48,19 @@ def test_threshold_coverage_monotone():
     })
     t = s5.threshold_table(n, [0.5, 0.7, 0.9])
     assert list(t.accepted_n) == [4, 3, 1]
+
+
+def test_ready_key_seed_nan_normalization():
+    import pandas as pd
+
+    audit = pd.DataFrame([
+        {"regime": "frozen_task_general", "model": "qwen", "dataset": "bionli", "seed": float("nan"), "status": "ready"},
+        {"regime": "supervised_baselines", "model": "biobert", "dataset": "bionli", "seed": 42.0, "status": "ready"},
+    ])
+    ready_keys = set()
+    for reg, model, dataset, seed in audit[audit.status.eq("ready")][["regime", "model", "dataset", "seed"]].itertuples(index=False, name=None):
+        norm_seed = None if pd.isna(seed) else int(seed)
+        ready_keys.add((reg, model, dataset, norm_seed))
+
+    assert ("frozen_task_general", "qwen", "bionli", None) in ready_keys
+    assert ("supervised_baselines", "biobert", "bionli", 42) in ready_keys

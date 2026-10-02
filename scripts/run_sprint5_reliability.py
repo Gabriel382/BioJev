@@ -573,7 +573,14 @@ def main() -> int:
         print("Use --audit-only to inspect the missing/invalid prediction artifacts. This does not require retraining.", file=sys.stderr)
         return 2
 
-    ready_keys = set(tuple(x) for x in audit[audit.status.eq("ready")][["regime", "model", "dataset", "seed"]].itertuples(index=False, name=None))
+    # pandas represents missing integer seeds as NaN in the audit DataFrame.
+    # Normalize those back to None before matching RunSpec keys; otherwise
+    # canonical frozen runs (seed=None) pass the audit but are silently
+    # excluded from the execution loop because NaN != None (and NaN != NaN).
+    ready_keys = set()
+    for reg, model, dataset, seed in audit[audit.status.eq("ready")][["regime", "model", "dataset", "seed"]].itertuples(index=False, name=None):
+        norm_seed = None if pd.isna(seed) else int(seed)
+        ready_keys.add((reg, model, dataset, norm_seed))
     selected = [r for r in runs if (r.regime, r.model, r.dataset, r.seed) in ready_keys]
     summaries = []
     for i, run in enumerate(selected, 1):
