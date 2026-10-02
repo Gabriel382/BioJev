@@ -34,6 +34,28 @@ def _write_csv(path: Path, rows: list[dict]):
             writer.writerow({k: row.get(k) for k in scalar_keys})
 
 
+def _verify_backfill_metrics(existing: dict, recomputed: dict, tol: float = 1e-6) -> list[str]:
+    """Return human-readable scalar metric mismatches beyond tolerance."""
+    keys = (
+        "n", "accuracy", "precision_macro", "recall_macro", "f1_macro", "f1_micro",
+        "ece", "brier", "nll", "mean_confidence",
+    )
+    diffs: list[str] = []
+    for key in keys:
+        if key not in existing or key not in recomputed:
+            continue
+        a, b = existing[key], recomputed[key]
+        if isinstance(a, bool) or isinstance(b, bool):
+            continue
+        if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+            if key == "n":
+                if int(a) != int(b):
+                    diffs.append(f"{key}: existing={a} recomputed={b}")
+            elif abs(float(a) - float(b)) > tol:
+                diffs.append(f"{key}: existing={a:.12g} recomputed={b:.12g}")
+    return diffs
+
+
 def main():
     p = argparse.ArgumentParser(description="Sprint 4 frozen multi-dataset benchmark.")
     p.add_argument("--config", required=True)
@@ -41,6 +63,12 @@ def main():
     p.add_argument("--dataset", action="append", default=[], help="Run only named dataset(s).")
     p.add_argument("--max-examples", type=int, default=None)
     p.add_argument("--skip-existing", action="store_true")
+    p.add_argument(
+        "--backfill-metric-tolerance",
+        type=float,
+        default=1e-6,
+        help="Maximum absolute scalar-metric difference allowed when backfilling missing predictions for an existing run.",
+    )
     args = p.parse_args()
 
     cfg = load_yaml(args.config)
@@ -67,10 +95,17 @@ def main():
                 role = ds_spec.get("role", "evaluation")
                 run_dir = root / f"{model_name}__{ds_name}__{split}__seed{seed}"
                 metric_path = run_dir / "metrics.json"
-                if args.skip_existing and metric_path.exists():
-                    print(f"  [skip] {ds_name}/{split}")
+                prediction_path = run_dir / "predictions.jsonl"
+                has_metrics = metric_path.exists()
+                has_predictions = prediction_path.exists()
+                backfill_predictions = bool(args.skip_existing and has_metrics and not has_predictions)
+
+                if args.skip_existing and has_metrics and has_predictions:
+                    print(f"  [skip] {ds_name}/{split} (metrics + predictions present)")
                     metrics = json.loads(metric_path.read_text(encoding="utf-8"))
                 else:
+                    if backfill_predictions:
+                        print(f"  [backfill] {ds_name}/{split}: metrics exist, predictions missing")
                     examples = resolve_eval_split(ds_name, split, seed)
                     max_examples = ds_spec.get("max_examples", args.max_examples)
                     if max_examples:
@@ -82,10 +117,39 @@ def main():
                         records = model.predict_nli(examples, batch_size)
                     else:
                         records = model.predict_relations(examples, batch_size)
-                    metrics = detailed_metrics(records)
+                    recomputed_metrics = detailed_metrics(records)
                     ensure_dir(run_dir)
-                    write_jsonl(run_dir / "predictions.jsonl", records)
-                    write_json(metric_path, metrics)
+
+                    if backfill_predictions:
+                        existing_metrics = json.loads(metric_path.read_text(encoding="utf-8"))
+                        diffs = _verify_backfill_metrics(
+                            existing_metrics, recomputed_metrics, tol=float(args.backfill_metric_tolerance)
+                        )
+                        if diffs:
+                            candidate_predictions = run_dir / "predictions.backfill_candidate.jsonl"
+                            candidate_metrics = run_dir / "metrics.backfill_candidate.json"
+                            write_jsonl(candidate_predictions, records)
+                            write_json(candidate_metrics, recomputed_metrics)
+                            details = "\n      ".join(diffs)
+                            raise RuntimeError(
+                                f"Backfill verification failed for {model_name}/{ds_name}/{split}. "
+                                f"Existing Sprint-4 metrics disagree with recomputed inference:\n      {details}\n"
+                                f"Candidate artifacts were written to {candidate_predictions} and {candidate_metrics}; "
+                                "the canonical predictions.jsonl was NOT created."
+                            )
+                        write_jsonl(prediction_path, records)
+                        metrics = existing_metrics
+                        write_json(run_dir / "prediction_backfill_verification.json", {
+                            "status": "verified",
+                            "metric_tolerance": float(args.backfill_metric_tolerance),
+                            "existing_metrics_preserved": True,
+                        })
+                        print(f"  [backfill-ok] {ds_name}/{split}: predictions restored; existing metrics preserved")
+                    else:
+                        metrics = recomputed_metrics
+                        write_jsonl(prediction_path, records)
+                        write_json(metric_path, metrics)
+
                     write_json(run_dir / "model_config.json", model_cfg)
                     write_json(run_dir / "environment.json", snapshot_environment())
                     write_json(run_dir / "protocol.json", {
