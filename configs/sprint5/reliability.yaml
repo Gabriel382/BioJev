@@ -29,6 +29,7 @@ prediction_filenames:
 regimes:
   frozen_task_general:
     roots:
+      - results/sprint4/frozen_4b
       - results/sprint4/frozen_task_general
       - results/sprint4/frozen
       - results/sprint4/frozen_models

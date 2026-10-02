@@ -379,7 +379,16 @@ def discover_for_regime(name: str, cfg: dict[str, Any], root: Path) -> tuple[lis
         model = infer_model(p, aliases, rcfg["models"])
         dataset = infer_dataset(p, rcfg["datasets"])
         seed = infer_seed(p)
-        if rcfg.get("seeds") and seed not in set(int(x) for x in rcfg["seeds"]):
+        configured_seeds = rcfg.get("seeds")
+        if configured_seeds:
+            if seed not in set(int(x) for x in configured_seeds):
+                seed = None
+        else:
+            # Single-run regimes (e.g. frozen_task_general) may encode a
+            # reproducibility seed in the directory name, but Sprint 5 treats
+            # them as one canonical run per model/dataset rather than as a
+            # multi-seed experiment. Normalize that path seed away so discovery
+            # matches expected_keys(), which uses seed=None for seeds: [].
             seed = None
         if model is None or dataset is None:
             stray.append({"regime": name, "status": "unclassified", "source": str(p), "model": model, "dataset": dataset, "seed": seed, "message": "could not infer model/dataset from path"})
