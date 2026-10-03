@@ -1,0 +1,44 @@
+release_name: biojev-paper-release
+release_version: 0.7.0
+output_dir: releases/biojev-paper
+
+required_artifacts:
+  - {id: sprint4_frozen_summary, path: results/sprint4/frozen_4b/summary.csv, kind: table}
+  - {id: sprint5_summary, path: results/sprint5/summary.csv, kind: table}
+  - {id: sprint5_reliability_table, path: results/sprint5/tables/reliability_summary.csv, kind: table}
+  - {id: sprint5_selective_table, path: results/sprint5/tables/selective_at_090.csv, kind: table}
+  - {id: sprint6_summary, path: results/sprint6/nano_ablation_eval/summary.csv, kind: table}
+  - {id: sprint6_ablation_table, path: results/sprint6/tables/ablation_macro_f1.csv, kind: table}
+  - {id: sprint6_effects_table, path: results/sprint6/tables/ablation_effects.csv, kind: table}
+  - {id: sprint6_provenance, path: results/sprint6/tables/training_provenance.csv, kind: table}
+
+model_artifacts:
+  - {id: bioqwen_nano_dapt, path: outputs/biojev-nano/final, role: dapt_adapter}
+  - {id: biojev_4b, path: outputs/biojev/4b_full/stage-02-biomedical/final, role: main_4b_decision_checkpoint}
+  - {id: biojev_nano_full_ablation, path: outputs/biojev/sprint6_nano/full/stage-02-biomedical/final, role: nano_full_ablation_checkpoint}
+
+ablation_models:
+  root: outputs/biojev/sprint6_nano
+  variants: [general_only, biomedical_only, dapt_general, dapt_biomedical, general_biomedical, full, bionli_only, nli4ct_only]
+
+copy_globs:
+  - configs/**/*.yaml
+  - configs/**/*.yml
+  - results/sprint4/frozen_4b/summary.csv
+  - results/sprint5/*.csv
+  - results/sprint5/tables/*
+  - results/sprint5/figures/*.png
+  - results/sprint6/nano_ablation_eval/summary.csv
+  - results/sprint6/tables/*
+  - README.md
+  - pyproject.toml
+  - requirements*.txt
+
+exclude_globs:
+  - "**/__pycache__/**"
+  - "**/.git/**"
+  - "**/checkpoint-*/**"
+  - "**/*.pt"
+  - "**/*.pth"
+  - "**/optimizer*"
+  - "**/scheduler*"
