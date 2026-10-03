@@ -26,3 +26,4 @@ outputs/bioqwen/*
 !outputs/bioqwen/.gitkeep
 exports/
 logs/
+releases/
