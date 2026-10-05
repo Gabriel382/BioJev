@@ -166,16 +166,44 @@ class BioJevSystemOneAdapter:
 
     @torch.inference_mode()
     def _supports(self, state: str, instructions: str, candidates: list[str]):
-        prem = [state] * len(candidates)
-        hyp = [self._hypothesis(instructions, c) for c in candidates]
-        enc = self.tokenizer(prem, hyp, padding=True, truncation=True,
-                             max_length=self.max_length, return_tensors="pt")
+        """
+        Score candidates one-by-one.
+
+        Qwen3.5ForSequenceClassification rejects batch_size > 1 when its
+        internal classifier config does not expose pad_token_id. PEFT /
+        Transformers can keep separate config objects internally, so setting
+        pad_token_id on the outer wrapper is not always sufficient.
+
+        System One questions normally contain only a small number of candidates,
+        so sequential scoring is a robust compatibility strategy and avoids
+        modifying the trained checkpoint.
+        """
+        supports: list[float] = []
+        total_tokens = 0
         target = "cuda" if self.device == "cuda" else self.device
-        enc = {k: v.to(target) for k, v in enc.items()}
-        logits = self.model(**enc).logits.float()
-        e = logits[:, self.label_ids["entailment"]]
-        c = logits[:, self.label_ids["contradiction"]]
-        return (e - c).cpu().tolist(), int(enc["attention_mask"].sum().item())
+
+        for candidate in candidates:
+            hypothesis = self._hypothesis(instructions, candidate)
+
+            enc = self.tokenizer(
+                state,
+                hypothesis,
+                padding=False,
+                truncation=True,
+                max_length=self.max_length,
+                return_tensors="pt",
+            )
+            enc = {k: v.to(target) for k, v in enc.items()}
+            total_tokens += int(enc["attention_mask"].sum().item())
+
+            logits = self.model(**enc).logits.float()[0]
+
+            entailment = logits[self.label_ids["entailment"]]
+            contradiction = logits[self.label_ids["contradiction"]]
+
+            supports.append(float((entailment - contradiction).detach().cpu()))
+
+        return supports, total_tokens
 
     @staticmethod
     def _softmax(values: list[float]) -> list[float]:
