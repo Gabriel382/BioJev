@@ -39,19 +39,97 @@ class BioJevSystemOneAdapter:
                 bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True
             )
         if (Path(self.checkpoint) / "adapter_config.json").exists():
-            from peft import AutoPeftModelForSequenceClassification
-            model = AutoPeftModelForSequenceClassification.from_pretrained(
-                self.checkpoint, is_trainable=False, **kwargs
+            # IMPORTANT:
+            # AutoPeftModelForSequenceClassification may reconstruct the base model
+            # with the Transformers default num_labels=2. BioJev is a 3-way NLI
+            # classifier, and the saved PEFT checkpoint contains score.weight with
+            # shape [3, hidden_size]. Rebuild the base exactly as during training,
+            # then load the PEFT adapter on top.
+            from peft import PeftConfig, PeftModelForSequenceClassification
+
+            peft_cfg = PeftConfig.from_pretrained(self.checkpoint)
+            base_name = peft_cfg.base_model_name_or_path
+            if not base_name:
+                raise RuntimeError(
+                    "PEFT adapter_config.json does not define base_model_name_or_path"
+                )
+
+            base_model = AutoModelForSequenceClassification.from_pretrained(
+                base_name,
+                num_labels=3,
+                id2label={
+                    0: "contradiction",
+                    1: "entailment",
+                    2: "neutral",
+                },
+                label2id={
+                    "contradiction": 0,
+                    "entailment": 1,
+                    "neutral": 2,
+                },
+                **kwargs,
+            )
+
+            model = PeftModelForSequenceClassification.from_pretrained(
+                base_model,
+                self.checkpoint,
+                is_trainable=False,
             )
             tokenizer = AutoTokenizer.from_pretrained(self.checkpoint, use_fast=True)
         else:
-            model = AutoModelForSequenceClassification.from_pretrained(self.checkpoint, **kwargs)
+            model = AutoModelForSequenceClassification.from_pretrained(
+                self.checkpoint,
+                num_labels=3,
+                id2label={
+                    0: "contradiction",
+                    1: "entailment",
+                    2: "neutral",
+                },
+                label2id={
+                    "contradiction": 0,
+                    "entailment": 1,
+                    "neutral": 2,
+                },
+                **kwargs,
+            )
             tokenizer = AutoTokenizer.from_pretrained(self.checkpoint, use_fast=True)
         if tokenizer.pad_token_id is None:
             tokenizer.pad_token = tokenizer.eos_token
         model.eval()
         if self.device != "cuda":
             model.to(self.device)
+
+        # Fail early if a wrong classification head was reconstructed.
+        if int(getattr(model.config, "num_labels", 0)) != 3:
+            raise RuntimeError(
+                f"Loaded checkpoint has num_labels={getattr(model.config, 'num_labels', None)}; "
+                "BioJev requires 3 labels."
+            )
+
+        score = getattr(getattr(model, "base_model", model), "model", None)
+        # The forward-pass validation below is more reliable than relying on
+        # internal PEFT module names, which vary by version.
+        probe = tokenizer(
+            "BioJev compatibility probe.",
+            "This statement is supported.",
+            return_tensors="pt",
+            truncation=True,
+            max_length=min(self.max_length, 64),
+        )
+        target = "cuda" if self.device == "cuda" else self.device
+        probe = {k: v.to(target) for k, v in probe.items()}
+        with torch.inference_mode():
+            probe_logits = model(**probe).logits
+        if tuple(probe_logits.shape[-1:]) != (3,):
+            raise RuntimeError(
+                f"Loaded BioJev checkpoint produced logits shape {tuple(probe_logits.shape)}; "
+                "expected [..., 3]."
+            )
+
+        print(
+            "BioJev System One backend loaded: "
+            f"checkpoint={self.checkpoint} | labels=3 | device={self.device}"
+        )
         return tokenizer, model
 
     def _resolve_label_ids(self):
