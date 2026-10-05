@@ -94,7 +94,24 @@ class BioJevSystemOneAdapter:
             )
             tokenizer = AutoTokenizer.from_pretrained(self.checkpoint, use_fast=True)
         if tokenizer.pad_token_id is None:
+            if tokenizer.eos_token_id is None:
+                raise RuntimeError(
+                    "Tokenizer has neither pad_token_id nor eos_token_id; "
+                    "cannot batch System One candidates."
+                )
             tokenizer.pad_token = tokenizer.eos_token
+
+        # Qwen3.5ForSequenceClassification checks model.config.pad_token_id
+        # when batch_size > 1. Setting only tokenizer.pad_token is not enough.
+        model.config.pad_token_id = tokenizer.pad_token_id
+
+        # Be defensive across PEFT wrappers / Transformers versions.
+        if hasattr(model, "base_model") and hasattr(model.base_model, "config"):
+            model.base_model.config.pad_token_id = tokenizer.pad_token_id
+        inner = getattr(getattr(model, "base_model", None), "model", None)
+        if inner is not None and hasattr(inner, "config"):
+            inner.config.pad_token_id = tokenizer.pad_token_id
+
         model.eval()
         if self.device != "cuda":
             model.to(self.device)
