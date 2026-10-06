@@ -1,0 +1,57 @@
+name: biojev-systemone-9b
+seed: 42
+
+model:
+  base_model: Qwen/Qwen3.5-9B-Base
+  dapt_adapter: outputs/bioqwen-9b/pubmed_pmc_100m/final
+  prepared_base: outputs/biojev/sprint8/bases/9b-dapt-merged
+
+data:
+  tev_train: external/tev1/data/new-v1/records/train.jsonl
+  tev_dev: external/tev1/data/new-v1/records/dev.jsonl
+  biojev_processed_root: data/processed
+  biomedical_nli:
+    - name: bionli
+      train_split: train
+      dev_split: null
+      dev_holdout: 2000
+    - name: nli4ct
+      train_split: train
+      dev_split: dev
+  option_permutations: 2
+  max_train: null
+  max_dev: null
+  output_dir: data/sprint8/systemone_9b
+
+training:
+  output_dir: outputs/biojev/sprint8/systemone_9b
+  max_length: 2048
+  num_train_epochs: 1
+  max_steps: -1
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  gradient_checkpointing: true
+  learning_rate: 5.0e-5
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  max_grad_norm: 1.0
+  lora_r: 8
+  lora_alpha: 16
+  lora_dropout: 0.0
+  target_modules: all-linear
+  bnb_4bit_quant_type: nf4
+  double_quant: true
+  eval_steps: 250
+  save_steps: 250
+  save_total_limit: 2
+  logging_steps: 10
+  dataloader_num_workers: 2
+  report_to: none
+
+export:
+  merged_dir: outputs/biojev/sprint8/systemone_9b/merged
+  gguf_dir: outputs/biojev/sprint8/systemone_9b/gguf
+  quantize: Q8_0
+  ollama_model: biojev-systemone:9b

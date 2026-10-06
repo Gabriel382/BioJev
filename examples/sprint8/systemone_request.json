@@ -1,0 +1,28 @@
+{
+  "model": "biojev-systemone:0.8b",
+  "state": "The patient has fever, productive cough, and a new lobar infiltrate.",
+  "questions": {
+    "diagnosis": {
+      "type": "choice",
+      "instructions": "Which diagnosis is best supported?",
+      "criteria": {
+        "pneumonia": "Community-acquired pneumonia",
+        "asthma": "Acute asthma exacerbation",
+        "migraine": "Migraine"
+      }
+    },
+    "infection": {
+      "type": "noul",
+      "instructions": "Is an infectious pulmonary process supported?"
+    },
+    "severity": {
+      "type": "score",
+      "instructions": "How severe is the presentation?",
+      "criteria": [
+        "Low",
+        "Moderate",
+        "High"
+      ]
+    }
+  }
+}
