@@ -1,0 +1,23 @@
+name: sprint4-frozen-9b
+output_root: results/sprint4/frozen_9b
+seed: 42
+models:
+- name: biojev-9b
+  config: configs/models/biojev_9b_local.yaml
+  batch_size: 1
+datasets:
+- name: bionli
+  split: test
+  role: held_out_from_single_split
+- name: nli4ct
+  split: dev
+  role: validation_seen_during_full_training
+- name: chemprot
+  split: test
+  role: zero_shot_relation_typing
+- name: ddi2013
+  split: test
+  role: zero_shot_relation_typing
+- name: biored
+  split: test
+  role: zero_shot_relation_typing
