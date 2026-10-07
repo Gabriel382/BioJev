@@ -27,3 +27,5 @@ outputs/bioqwen/*
 exports/
 logs/
 releases/
+external/
+data/sprint8/
