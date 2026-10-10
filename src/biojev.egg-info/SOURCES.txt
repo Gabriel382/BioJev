@@ -14,6 +14,7 @@ src/biojev/corpus/biomedical_stream.py
 src/biojev/corpus/packing.py
 src/biojev/datasets/__init__.py
 src/biojev/datasets/base.py
+src/biojev/datasets/baseline_splits.py
 src/biojev/datasets/bigbio_re.py
 src/biojev/datasets/bionli.py
 src/biojev/datasets/common.py
@@ -37,6 +38,16 @@ src/biojev/models/generative.py
 src/biojev/models/openjev.py
 src/biojev/models/registry.py
 src/biojev/models/seqcls.py
+src/biojev/systemone/__init__.py
+src/biojev/systemone/adapter.py
+src/biojev/systemone/api.py
+src/biojev/systemone/schemas.py
+src/biojev/systemone_native/__init__.py
+src/biojev/systemone_native/collator.py
+src/biojev/systemone_native/config.py
+src/biojev/systemone_native/data.py
+src/biojev/systemone_native/format.py
+src/biojev/systemone_native/ollama.py
 src/biojev/training/__init__.py
 src/biojev/training/callbacks.py
 src/biojev/training/dapt.py
@@ -49,6 +60,7 @@ src/biojev/utils/__init__.py
 src/biojev/utils/environment.py
 src/biojev/utils/io.py
 src/biojev/utils/seed.py
+tests/test_baseline_splits.py
 tests/test_corpus.py
 tests/test_dapt_to_decision_transfer.py
 tests/test_decision_config.py
@@ -59,3 +71,10 @@ tests/test_packing.py
 tests/test_padding_sync.py
 tests/test_splitting.py
 tests/test_sprint4.py
+tests/test_sprint5_reliability.py
+tests/test_sprint6_ablations.py
+tests/test_sprint7_release.py
+tests/test_sprint8_format.py
+tests/test_sprint8_ollama_shape.py
+tests/test_systemone_math.py
+tests/test_systemone_schema.py
